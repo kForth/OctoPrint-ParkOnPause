@@ -1,0 +1,124 @@
+<h3>{{ _('ParkOnPause Options') }}</h3>
+
+<form class="form-horizontal" onsubmit="return false;">
+
+    <div class="control-group">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.ParkOnPause.enableParkOnPause">
+            {{ _('Enable ParkOnPause Plugin') }}
+        </label>
+
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.ParkOnPause.homeBeforeUnpark">
+            {{ _("Home before Unparking") }}
+        </label>
+    </div>
+
+    <div class="control-group">
+        <legend>Parking</legend>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Park Location') }}:</label>
+            <div class="controls">
+                <select id="parkOnPause-park-location" data-bind="value: settings.plugins.ParkOnPause.parkLocation">
+                    <option value="center">Center of Bed</option>
+                    <option value="min_min">Min X / Min Y</option>
+                    <option value="min_max">Min X / Max Y</option>
+                    <option value="max_min">Max X / Min Y</option>
+                    <option value="max_max">Max X / Max Y</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="parkOnPause-custom-park-position" class="hidden">
+            <div class="control-group">
+                <label class="control-label">{{ _('X Position') }}:</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="number" step="0.1" data-bind="value: settings.plugins.ParkOnPause.parkPosX">
+                        <span class="add-on">mm</span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">{{ _('Y Position') }}:</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="number" step="0.1" data-bind="value: settings.plugins.ParkOnPause.parkPosY">
+                        <span class="add-on">mm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Z Lift Height') }}:</label>
+            <div class="controls">
+                <div class="input-append">
+                    <input type="number" step="0.1" data-bind="value: settings.plugins.ParkOnPause.parkLiftZ">
+                    <span class="add-on">mm</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{{ _('Park Speed') }}:</label>
+            <div class="controls">
+                <select id="parkOnPause-park-speed" data-bind="value: settings.plugins.ParkOnPause.parkSpeed">
+                    <option value="auto">From Printer Profile</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+        </div>
+            
+        <div id="parkOnPause-custom-park-speed" class="hidden">
+            <div class="control-group">
+                <label class="control-label">{{ _('X/Y-Axis Feedrate') }}:</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="number" step="5" min="5" data-bind="value: settings.plugins.ParkOnPause.parkSpeedXY">
+                        <span class="add-on">mm/m</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="control-label">{{ _('Z-Axis Feedrate') }}:</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="number" step="5" min="5" data-bind="value: settings.plugins.ParkOnPause.parkSpeedZ">
+                        <span class="add-on">mm/m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <legend>Printer Profiles</legend>     
+
+        <fieldset class="control-group" id="parkOnPause-profile-mode">
+            <label class="radio">
+                <input type="radio" value="all" name="parkOnPauseProfileModeGroup" data-bind="checked: settings.plugins.ParkOnPause.profileMode" checked>
+                {{ _('Enable For All Printer Profiles') }}
+            </label>
+            <label class="radio">
+                <input type="radio" value="select" name="parkOnPauseProfileModeGroup" data-bind="checked: settings.plugins.ParkOnPause.profileMode">
+                {{ _('Enable For Selected Profiles Only') }}
+            </label>
+        </fieldset>
+
+        <label class="control-group">
+            {{ _('Selected Profiles') }}:
+            <br>
+            <select class="span9" id="parkOnPause-profile-list" multiple="true" data-bind="
+                options: printerProfiles.profiles.items(),
+                optionsValue: item => item.id,
+                optionsText: item => item.name,
+                selectedOptions: settings.plugins.ParkOnPause.selectedProfiles,
+                event: { }">
+            </select>
+        </label>
+    </div>
+</form>
