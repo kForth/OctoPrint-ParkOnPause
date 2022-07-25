@@ -1,11 +1,11 @@
 
-# ParkOnPause
+# OctoPrint-ParkOnPause
 
 This plugin moves the print head to a specific position when pausing and moves back before resuming.
 
 ## Screenshot
 
-![Settings Page Screenshot](https://github.com/kForth/OctoPrint-ParkOnPause/blob/media/octoprint-parkonpause-settings-screenshot.png?raw=true)
+![Settings Page Screenshot](https://github.com/kForth/OctoPrint-ParkOnPause/blob/media/octoprint-ParkOnPause-settings-screenshot.png?raw=true)
 
 ## Setup
 

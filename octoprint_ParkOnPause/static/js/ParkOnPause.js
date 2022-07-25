@@ -9,50 +9,38 @@ $(function () {
     var self = this;
 
     self.settings = parameters[0];
+    self.printerProfiles = parameters[1];
+    
+    self.enableParkOnPause = ko.observable();
+    self.homeBeforeUnpark = ko.observable();
+    self.parkLocation = ko.observable();
+    self.parkPosX = ko.observable();
+    self.parkPosY = ko.observable();
+    self.parkLiftZ = ko.observable();
+    self.parkSpeed = ko.observable();
+    self.parkSpeedXY = ko.observable();
+    self.parkSpeedZ = ko.observable();
+    self.profileMode = ko.observable();
+    self.selectedProfiles = ko.observableArray([]);
 
-    self.initializeSettings = function () {
-
-      // Callback function to show/hide custom park location.
-      self.onParkLocationChange = function () {
-        $("#parkOnPause-custom-park-position").toggleClass('hidden',
-          $(this).children('option:selected').val() != "custom"
-        );
-      };
-      $("#parkOnPause-park-location").on('change', self.onParkLocationChange);
-
-      // Callback function to show/hide custom park speed.
-      self.onParkSpeedChange = function () {
-        $("#parkOnPause-custom-park-speed").toggleClass('hidden',
-          $(this).children('option:selected').val() != "custom"
-        );
-      };
-      $("#parkOnPause-park-speed").on('change', self.onParkSpeedChange);
-
-      // Callback function to enable/disable profile list based on radio buttons.
-      self.onProfileModeChange = function () {
-        let val = $("input[name='parkOnPauseProfileModeGroup']:checked").val();
-        $("#parkOnPause-profile-list").attr('disabled', val == "all");
-      };
-      $("#parkOnPause-profile-mode").on('change', self.onProfileModeChange);
-
-      // Update elements when the settings page is opened.
-      $("#settings_plugin_ParkOnPause_link").on('click', () => {
-        $("#parkOnPause-park-location").trigger('change');
-        $("#parkOnPause-park-speed").trigger('change');
-        $("#parkOnPause-profile-mode").trigger('change');
-      });
+    self.onBeforeBinding = function () {
+      self.enableParkOnPause(self.settings.settings.plugins.ParkOnPause.enableParkOnPause());
+      self.homeBeforeUnpark(self.settings.settings.plugins.ParkOnPause.homeBeforeUnpark());
+      self.parkLocation(self.settings.settings.plugins.ParkOnPause.parkLocation());
+      self.parkPosX(self.settings.settings.plugins.ParkOnPause.parkPosX());
+      self.parkPosY(self.settings.settings.plugins.ParkOnPause.parkPosY());
+      self.parkLiftZ(self.settings.settings.plugins.ParkOnPause.parkLiftZ());
+      self.parkSpeed(self.settings.settings.plugins.ParkOnPause.parkSpeed());
+      self.parkSpeedXY(self.settings.settings.plugins.ParkOnPause.parkSpeedXY());
+      self.parkSpeedZ(self.settings.settings.plugins.ParkOnPause.parkSpeedZ());
+      self.profileMode(self.settings.settings.plugins.ParkOnPause.profileMode());
+      self.selectedProfiles(self.settings.settings.plugins.ParkOnPause.selectedProfiles());
     };
-
-    self.initializeSettings();
   }
 
-  /* view model class, parameters for constructor, container to bind to
-   * Please see http://docs.octoprint.org/en/master/plugins/viewmodels.html#registering-custom-viewmodels for more details
-   * and a full list of the available options.
-   */
   OCTOPRINT_VIEWMODELS.push({
     construct: ParkOnPauseViewModel,
-    dependencies: ["settingsViewModel"],
-    elements: []
+    dependencies: ["settingsViewModel", "printerProfilesViewModel"],
+    elements: ["#settings_plugin_ParkOnPause"]
   });
 });

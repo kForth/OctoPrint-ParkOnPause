@@ -1,45 +1,45 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-from enum import Enum
+from __future__ import absolute_import
 
 import octoprint.plugin
 import logging
 
-class ParkOnPauseProfileModes(Enum):
-    ALL = 0
-    SELECT = 1
+class ProfileMode:
+    ALL = "all"
+    SELECT = "select"
 
-class ParkOnPauseParkLocations(Enum):
-    CENTER = 0
-    MIN_MIN = 1
-    MIN_MAX = 2
-    MAX_MIN = 3
-    MAX_MAX = 4
-    CUSTOM_ = 5
+class ParkLocation:
+    CENTER = "center"
+    MIN_MIN = "min"
+    MAX_MAX = "max"
+    MIN_MAX = "min_max"
+    MAX_MIN = "max_min"
+    CUSTOM = "custom"
 
-class ParkOnPauseParkSpeeds(Enum):
-    AUTO = 0
-    CUSTOM = 1
+class ParkSpeed:
+    AUTO = "auto"
+    CUSTOM = "custom"
 
-class ParkOnPausePlugin(octoprint.plugin.EventHandlerPlugin,
-                        octoprint.plugin.SettingsPlugin,
-                        octoprint.plugin.AssetPlugin,
-                        octoprint.plugin.TemplatePlugin,
-                        octoprint.plugin.StartupPlugin):
+class ParkOnPausePlugin(
+    octoprint.plugin.EventHandlerPlugin,
+    octoprint.plugin.SettingsPlugin,
+    octoprint.plugin.AssetPlugin,
+    octoprint.plugin.TemplatePlugin
+):
 
     def __init__(self):
-        self._logger = logging.getLogger(__name__)
+        # self._logger = logging.getLogger(__name__)
 
         self.pausePosX = None
         self.pausePosY = None
         self.pausePosZ = None
         
-        self._profileMode = ParkOnPauseProfileModes.ALL.name.lower()
+        self._profileMode = ProfileMode.ALL
         self._selectedProfiles = []
         self._enableParkOnPause = True
         self._homeBeforeUnpark = False
-        self._parkLocation = ParkOnPauseParkLocations.CENTER.name.lower()
-        self._parkSpeed = ParkOnPauseParkSpeeds.AUTO.name.lower()
+        self._parkLocation = ParkLocation.CENTER
+        self._parkSpeed = ParkSpeed.AUTO
         self._parkPosX = 0  # mm
         self._parkPosY = 0  # mm
         self._parkLiftZ = 5  # mm
@@ -70,33 +70,33 @@ class ParkOnPausePlugin(octoprint.plugin.EventHandlerPlugin,
         self.pausePosZ = None
     
     def get_park_pos(self):
-        if self._parkLocation == ParkOnPauseParkLocations.CUSTOM.lower():
+        if self._parkLocation == ParkLocation.CUSTOM:
             return self._parkPosX, self._parkPosY
         else:
             profile = self._printer_profile_manager.get_current()
-            if self._parkLocation == ParkOnPauseParkLocations.CENTER.lower():
-                return profile.volume.width / 2, profile.volume.depth / 2
-            elif self._parkLocation == ParkOnPauseParkLocations.MIN_MIN.lower():
+            if self._parkLocation == ParkLocation.CENTER:
+                return profile['volume']['width'] / 2, profile['volume']['depth'] / 2
+            elif self._parkLocation == ParkLocation.MIN_MIN:
                 return 0, 0
-            elif self._parkLocation == ParkOnPauseParkLocations.MIN_MAX.lower():
-                return 0, profile.volume.depth
-            elif self._parkLocation == ParkOnPauseParkLocations.MAX_MIN.lower():
-                return profile.volume.width, 0
-            elif self._parkLocation == ParkOnPauseParkLocations.MAX_MAX.lower():
-                return profile.volume.width, profile.volume.depth
+            elif self._parkLocation == ParkLocation.MIN_MAX:
+                return 0, profile['volume']['depth']
+            elif self._parkLocation == ParkLocation.MAX_MIN:
+                return profile['volume']['width'], 0
+            elif self._parkLocation == ParkLocation.MAX_MAX:
+                return profile['volume']['width'], profile['volume']['depth']
             else:
                 self._logger.error("Invalid Park Location = %s", self._parkLocation)
                 return 0, 0
 
     def get_park_speeds(self):
-        if self._parkSpeed == ParkOnPauseParkSpeeds.AUTO.lower():
+        if self._parkSpeed == ParkSpeed.AUTO:
             profile = self._printer_profile_manager.get_current()
-            return min(profile.axes.x.speed, profile.axes.y.speed), profile.axes.z.speed
+            return min(profile['axes']['x']['speed'], profile['axes']['y']['speed']), profile['axes']['z']['speed']
         else:
             return self._parkSpeedXY, self._parkSpeedZ
 
     def _enabled_for_current_profile(self):
-        if self._profileMode == ParkOnPauseProfileModes.ALL.name:
+        if self._profileMode == ProfileMode.ALL:
             return True
         profile = self._printer_profile_manager.get_current()
         if not profile:
@@ -106,25 +106,16 @@ class ParkOnPausePlugin(octoprint.plugin.EventHandlerPlugin,
             return False
         return profile_id in self._selectedProfiles
 
-    ##~~ StartupPlugin
-    def on_after_startup(self):
-        self._logger.info("ParkOnPause Loaded")
+    ##~~ SettingsPlugin mixin
 
-    ##~~ AssetPlugin
-    def get_assets(self):
-        return dict(
-            js=["js/ParkOnPause.js"],
-        )
-
-    ##~~ SettingsPlugin
     def get_settings_defaults(self):
         return {
-            "profileMode": ParkOnPauseProfileModes.ALL.name.lower(),
+            "profileMode": ProfileMode.ALL,
             "selectedProfiles": [],
             "enableParkOnPause": True,
             "homeBeforeUnpark": False,
-            "parkLocation": ParkOnPauseParkLocations.CENTER.name.lower(),
-            "parkSpeed": ParkOnPauseParkSpeeds.AUTO.name.lower(),
+            "parkLocation": ParkLocation.CENTER,
+            "parkSpeed": ParkSpeed.AUTO,
             "parkPosX": 0,  # mm
             "parkPosY": 0,  # mm
             "parkLiftZ": 5,  # mm
@@ -136,21 +127,45 @@ class ParkOnPausePlugin(octoprint.plugin.EventHandlerPlugin,
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
         self.initialize()
 
-    ##~~ TemplatePlugin
+    ##~~ AssetPlugin mixin
+    def get_assets(self):
+        return dict(
+            js=["js/ParkOnPause.js"],
+        )
+
+    ##~~ TemplatePlugin mixin
+
     def get_template_configs(self):
         return [
             {
                 "type": "settings",
-                "name": "ParkOnPause",
+                "name": "ParkOnPause Plugin",
                 "template": "ParkOnPause_settings.jinja2",
-                "custom_bindings": False,
+                "custom_bindings": True,
             }
         ]
+
+    def get_template_vars(self):
+        return dict(
+            enableParkOnPause=self._settings.get(["enableParkOnPause"]),
+            homeBeforeUnpark=self._settings.get(["homeBeforeUnpark"]),
+            parkLocation=self._settings.get(["parkLocation"]),
+            parkPosX=self._settings.get(["parkPosX"]),
+            parkPosY=self._settings.get(["parkPosY"]),
+            parkLiftZ=self._settings.get(["parkLiftZ"]),
+            parkSpeed=self._settings.get(["parkSpeed"]),
+            parkSpeedXY=self._settings.get(["parkSpeedXY"]),
+            parkSpeedZ=self._settings.get(["parkSpeedZ"]),
+            profileMode=self._settings.get(["profileMode"]),
+            selectedProfiles=self._settings.get(["selectedProfiles"])
+        )
     
     # ~~ EventHandlerPlugin hook
+
     def on_event(self, event, payload):
         if event not in ("PrintPaused", "PrintResumed"):
             return
+        self._logger.error(event)
         if not self._enableParkOnPause or not self._enabled_for_current_profile():
             return
 
@@ -188,7 +203,8 @@ class ParkOnPausePlugin(octoprint.plugin.EventHandlerPlugin,
 
         return True
 
-    ## Software Update Hook
+    ## Softwareupdate Hook
+
     def get_update_information(self):
         return dict(
             ParkOnPause=dict(
@@ -207,7 +223,7 @@ class ParkOnPausePlugin(octoprint.plugin.EventHandlerPlugin,
         )
 
 
-__plugin_name__ = "ParkOnPause"
+__plugin_name__ = "ParkOnPause Plugin"
 __plugin_version__ = "0.1.0"
 __plugin_description__ = "Move the print head to a specific position when a print is paused."
 __plugin_pythoncompat__ = ">=2.7,<4"
