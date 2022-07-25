@@ -149,45 +149,42 @@ class ParkOnPausePlugin(octoprint.plugin.EventHandlerPlugin,
     
     # ~~ EventHandlerPlugin hook
     def on_event(self, event, payload):
-        if self._enableParkOnPause and self._enabled_for_current_profile():
-            if event == "PrintPaused":
-                self.set_pause_pos(**payload['position'])
-                self._logger.info("Parking Print Head")
-                parkX, parkY = self.get_park_pos()
-                speedXY, speedZ = self.get_park_speeds()
-                cmds = [
-                    'G91', # Relative positioning
-                    f'G0 Z{self._parkLiftZ} F{speedZ}', # Lift Z-Axis
-                    'G90', # Absolute positioning
-                    f'G0 X{parkX} Y{parkY} F{speedXY}', # Park X/Y axes
-                    'M400', # Finish Commands
-                ]
-                self._printer.commands(cmds)
+        if event not in ("PrintPaused", "PrintResumed"):
+            return
+        if not self._enableParkOnPause or not self._enabled_for_current_profile():
+            return
 
-            elif event == "PrintResumed":
-                if any([e is None for e in [self.pausePosX, self.pausePosY, self.pausePosY]]):
-                    self._logger.error(
-                        'ParkOnPause is resuming but some of pausePos is invalid! [%s, %s, %s]',
-                        self.pausePosX, self.pausePosY, self.pausePosZ
-                    )
-                    self._event_bus.fire("Error", {
-                        "error": '\nParkOnPause cannot resume print! Some of the stored pause position is invalid.'
-                    })
-                    self._printer.cancel_print()
-                    return False
+        if event == "PrintPaused":
+            self.set_pause_pos(**payload['position'])
+            self._logger.info("Parking Print Head")
+            parkX, parkY = self.get_park_pos()
+            speedXY, speedZ = self.get_park_speeds()
 
-                self._logger.info("Unparking Print Head")
-                speedXY, speedZ = self.get_park_speeds()
-                cmds = [
-                    'G90', # Absolute positioning
-                    f'G0 X{self.pausePosX} Y{self.pausePosY} F{speedXY}', # Unpark X/Y axes
-                    f'G0 Z{self.pausePosZ} F{speedZ}', # Lower Z-Axis
-                    'M400', # Finish Commands
-                ]
-                if self._homeBeforeUnpark:
-                    cmds.insert(0, 'G28 X Y')  # Home X and Y axes only (if enabled)
-                self.reset_pause_pos()
-                self._printer.commands(cmds)
+            self._printer.jog({'z': self._parkLiftZ}, True, speedZ)
+            self._printer.jog({'x': parkX, 'y': parkY}, False, speedXY)
+            self._printer.commands("M400")
+
+        elif event == "PrintResumed":
+            if any([e is None for e in [self.pausePosX, self.pausePosY, self.pausePosY]]):
+                self._logger.error(
+                    'ParkOnPause is resuming but some of pausePos is invalid! [%s, %s, %s]',
+                    self.pausePosX, self.pausePosY, self.pausePosZ
+                )
+                self._event_bus.fire("Error", {
+                    "error": '\nParkOnPause cannot resume print! Some of the stored pause position is invalid.'
+                })
+                self._printer.cancel_print()
+                return False
+
+            self._logger.info("Unparking Print Head")
+            speedXY, speedZ = self.get_park_speeds()
+
+            if self._homeBeforeUnpark:
+                self._printer.home(['x', 'y'])
+            self._printer.jog({'x': self.pausePosX, 'y': self.pausePosY}, False, speedXY)
+            self._printer.jog({'z': self.pausePosZ}, False, speedZ)
+            self._printer.commands("M400")
+            self.reset_pause_pos()
 
         return True
 
